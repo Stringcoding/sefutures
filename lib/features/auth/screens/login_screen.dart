@@ -1,73 +1,196 @@
-name: savings_app
-description: A modern savings app with Supabase backend
+import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_hooks/flutter_hooks.dart';
+import 'package:flutter_svg/flutter_svg.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:sefutures/core/widgets/auth_form_field.dart';
+import 'package:sefutures/core/widgets/primary_button.dart';
+import 'package:sefutures/features/auth/bloc/auth_bloc.dart';
 
-version: 1.0.0+1
+class LoginScreen extends HookWidget {
+  const LoginScreen({super.key});
 
-environment:
-  sdk: '>=3.0.0 <4.0.0'
+  @override
+  Widget build(BuildContext context) {
+    final _formKey = useMemoized(() => GlobalKey<FormState>());
+    final emailController = useTextEditingController();
+    final passwordController = useTextEditingController();
+    final obscurePassword = useState(true);
 
-dependencies:
-  flutter:
-    sdk: flutter
-  cupertino_icons: ^1.0.5
+    return Scaffold(
+      body: SafeArea(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(24),
+          child: BlocListener<AuthBloc, AuthState>(
+            listener: (context, state) {
+              if (state is AuthError) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(state.message),
+                    backgroundColor: Colors.redAccent,
+                  ),
+                );
+              }
+            },
+            child: Form(
+              key: _formKey,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  // Header
+                  SvgPicture.asset(
+                    'assets/svgs/logo.svg',
+                    height: 120,
+                  ),
+                  const SizedBox(height: 32),
+                  Text(
+                    'Welcome Back',
+                    style: GoogleFonts.inter(
+                      fontSize: 24,
+                      fontWeight: FontWeight.w700,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Sign in to continue your savings journey',
+                    style: Theme.of(context).textTheme.bodyMedium,
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 40),
 
-  # Supabase Core (Latest Stable Versions)
-  supabase_flutter: ^2.1.1
-  postgrest: ^3.1.0
-  gotrue: ^2.1.0
-  realtime_client: ^2.1.0
-  storage_client: ^2.1.0
+                  // Email Field
+                  AuthFormField(
+                    controller: emailController,
+                    label: 'Email Address',
+                    prefixIcon: Icons.email_outlined,
+                    keyboardType: TextInputType.emailAddress,
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'Please enter your email';
+                      }
+                      if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$')
+                          .hasMatch(value)) {
+                        return 'Enter a valid email address';
+                      }
+                      return null;
+                    },
+                  ),
+                  const SizedBox(height: 16),
 
-  # State Management
-  flutter_bloc: ^8.1.3
-  equatable: ^2.0.5
-  hydrated_bloc: ^9.1.2
+                  // Password Field
+                  AuthFormField(
+                    controller: passwordController,
+                    label: 'Password',
+                    prefixIcon: Icons.lock_outline,
+                    obscureText: obscurePassword.value,
+                    suffixIcon: IconButton(
+                      icon: Icon(
+                        obscurePassword.value
+                            ? Icons.visibility_off
+                            : Icons.visibility,
+                      ),
+                      onPressed: () =>
+                          obscurePassword.value = !obscurePassword.value,
+                    ),
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'Please enter your password';
+                      }
+                      if (value.length < 6) {
+                        return 'Password must be at least 6 characters';
+                      }
+                      return null;
+                    },
+                  ),
+                  const SizedBox(height: 8),
 
-  # Form Validation
-  formz: ^0.4.1
+                  // Forgot Password
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: TextButton(
+                      onPressed: () => context
+                          .read<AuthBloc>()
+                          .add(PasswordResetRequested(emailController.text)),
+                      child: const Text('Forgot Password?'),
+                    ),
+                  ),
+                  const SizedBox(height: 24),
 
-  # UI Components
-  flutter_svg: ^2.0.7
-  google_fonts: ^4.0.4
-  shimmer: ^3.0.0
-  percent_indicator: ^4.2.3
-  syncfusion_flutter_charts: ^23.1.44
-  intl: ^0.18.1
-  fluttertoast: ^8.2.2
+                  // Sign In Button
+                  BlocBuilder<AuthBloc, AuthState>(
+                    builder: (context, state) {
+                      return PrimaryButton(
+                        label: 'Sign In',
+                        isLoading: state is AuthLoading,
+                        onPressed: () {
+                          if (_formKey.currentState!.validate()) {
+                            context.read<AuthBloc>().add(
+                                  SignInRequested(
+                                    emailController.text.trim(),
+                                    passwordController.text.trim(),
+                                  ),
+                                );
+                          }
+                        },
+                      );
+                    },
+                  ),
+                  const SizedBox(height: 24),
 
-  # Animations
-  animations: ^2.0.7
+                  // Divider
+                  Row(
+                    children: [
+                      const Expanded(child: Divider()),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        child: Text(
+                          'OR',
+                          style: Theme.of(context).textTheme.labelMedium,
+                        ),
+                      ),
+                      const Expanded(child: Divider()),
+                    ],
+                  ),
+                  const SizedBox(height: 24),
 
-  # File/Image Picker
-  image_picker: ^1.0.4
-  file_picker: ^5.3.3
+                  // Social Login
+                  OutlinedButton.icon(
+                    icon: SvgPicture.asset(
+                      'assets/svgs/google.svg',
+                      height: 24,
+                    ),
+                    label: const Text('Continue with Google'),
+                    style: OutlinedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                    ),
+                    onPressed: () => context
+                        .read<AuthBloc>()
+                        .add(const SignInWithProviderRequested('google')),
+                  ),
+                  const SizedBox(height: 16),
 
-  # Local Storage
-  shared_preferences: ^2.2.1
-  hive_flutter: ^1.1.0
-
-dev_dependencies:
-  flutter_test:
-    sdk: flutter
-  flutter_lints: ^3.0.1
-  bloc_test: ^9.1.4
-  mocktail: ^1.0.0
-
-flutter:
-  uses-material-design: true
-  assets:
-    - assets/images/
-    - assets/icons/
-    - assets/svgs/
-    - assets/fonts/
-
-  fonts:
-    - family: Inter
-      fonts:
-        - asset: assets/fonts/Inter-Regular.ttf
-        - asset: assets/fonts/Inter-Medium.ttf
-          weight: 500
-        - asset: assets/fonts/Inter-SemiBold.ttf
-          weight: 600
-        - asset: assets/fonts/Inter-Bold.ttf
-          weight: 700
+                  // Sign Up Prompt
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        "Don't have an account?",
+                        style: Theme.of(context).textTheme.bodyMedium,
+                      ),
+                      TextButton(
+                        onPressed: () =>
+                            Navigator.pushNamed(context, '/signup'),
+                        child: const Text('Sign Up'),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}

@@ -45,5 +45,34 @@
 	<true/>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
+	<!-- ios/Runner/Info.plist -->
+<key>CFBundleURLTypes</key>
+<array>
+    <dict>
+        <key>CFBundleTypeRole</key>
+        <string>Editor</string>
+        <key>CFBundleURLName</key>
+        <string>com.yourdomain.sefutures</string>
+        <key>CFBundleURLSchemes</key>
+        <array>
+            <string>com.yourdomain.sefutures</string>
+        </array>
+    </dict>
+</array>
+
+<!-- Required for Supabase OAuth -->
+<key>LSApplicationQueriesSchemes</key>
+<array>
+    <string>https</string>
+    <string>http</string>
+</array>
+
+<!-- iOS 14+ Photo Picker (for image_picker) -->
+<key>NSPhotoLibraryUsageDescription</key>
+<string>Allow Sefutures to access your photos for receipt uploads</string>
+<key>NSCameraUsageDescription</key>
+<string>Allow Sefutures to use your camera for document scanning</string>
+<key>NSMicrophoneUsageDescription</key>
+<string>Allow Sefutures to record videos with sound</string>
 </dict>
 </plist>
